@@ -1,6 +1,7 @@
 import heapq
 import math
 import time
+from toolbox import Toolbox
 from collections import deque
 from enum import Enum
 import sys
@@ -72,7 +73,6 @@ class PaFinder:
         self.map = map
         self.heuristic = heuristic
         self.goal = [0, 0]
-        # PriorityQueue will store a set of coordinates and a direction
         self.frontier = []
         self.exploring = []
         self.counter = 0
@@ -81,7 +81,6 @@ class PaFinder:
         self.goal_reached = False
         self.goal_node = []
         self.start = []
-
 
         heapq.heapify(self.frontier)
 
@@ -208,106 +207,6 @@ class PaFinder:
                 "Bash": 0,
             }
 
-    def orientation_finder(self, turn, orientation):
-        if turn.count("Right"):
-            if orientation.count("south"):
-                return "west"
-            if orientation.count("north"):
-                return "east"
-            if orientation.count("west"):
-                return "north"
-            if orientation.count("east"):
-                return "south"
-        if turn.count("Left"):
-            if orientation.count("south"):
-                return "east"
-            if orientation.count("north"):
-                return "west"
-            if orientation.count("west"):
-                return "south"
-            if orientation.count("east"):
-                return "north"
-        if turn.count("None"):
-            return orientation
-        if turn.count("Reverse"):
-            if orientation.count("south"):
-                return "north"
-            if orientation.count("north"):
-                return "south"
-            if orientation.count("west"):
-                return "east"
-            if orientation.count("east"):
-                return "west"
-
-    def turn_decoder(self, parent, child):
-        if child.count("west"):
-            if parent.count("south"):
-                return "Right"
-            if parent.count("north"):
-                return "Left"
-            if parent.count("west"):
-                return "None"
-            if parent.count("east"):
-                return "Reverse"
-        if child.count("east"):
-            if parent.count("south"):
-                return "Left"
-            if parent.count("north"):
-                return "Right"
-            if parent.count("west"):
-                return "Reverse"
-            if parent.count("east"):
-                return "None"
-        if child.count("south"):
-            if parent.count("south"):
-                return "None"
-            if parent.count("north"):
-                return "Reverse"
-            if parent.count("west"):
-                return "Left"
-            if parent.count("east"):
-                return "Right"
-        if child.count("north"):
-            if parent.count("south"):
-                return "Reverse"
-            if parent.count("north"):
-                return "None"
-            if parent.count("west"):
-                return "Right"
-            if parent.count("east"):
-                return "Left"
-
-    def result(self, position, turn, move, orientation):
-        x, y = position
-        new_orientation = []
-        holder = []
-        turn = turn
-        orientation = orientation
-        new_orientation = self.orientation_finder(turn, orientation)
-        if new_orientation == "north":
-            if move.count("Forward"):
-                y -= 1
-            if move.count("Bash"):
-                y -= 2
-        if new_orientation == "south":
-            if move.count("Forward"):
-                y += 1
-            if move.count("Bash"):
-                y += 2
-        if new_orientation == "east":
-            if move.count("Forward"):
-                x += 1
-            if move.count("Bash"):
-                x += 2
-        if new_orientation == "west":
-            if move.count("Forward"):
-                x -= 1
-            if move.count("Bash"):
-                x -= 2
-        new_position = (x, y)
-        holder = [new_position, new_orientation]
-        return holder
-
     def expand_frontier(self, heuristic, coordinates, orientation):
         cumulative_cost = (getattr(self.marked_map[coordinates[1]][coordinates[0]], orientation)).cumulative_cost
         cumulative_action = (getattr(self.marked_map[coordinates[1]][coordinates[0]], orientation)).cumulative_action
@@ -324,7 +223,7 @@ class PaFinder:
                 new_orientation = []
                 final_cost = 0
                 self.exploring = []
-                result_holder = self.result(coordinates, turn, move, orientation)
+                result_holder = Toolbox.result(coordinates, turn, move, orientation)
                 newx, newy = result_holder[0]
                 new_orientation = result_holder[1]
 
@@ -353,15 +252,6 @@ class PaFinder:
                         else:
                             new_cell.cumulative_action = cumulative_action + 2
 
-
-    def get_move(self, child_coordinates, parent_x, parent_y):
-        if (abs(child_coordinates[0] - parent_x) > 1) or \
-                (abs(child_coordinates[1] - parent_y) > 1):
-            return 'Bash'
-        else:
-            return 'forward'
-
-
     def back_tracking(self, child_coordinates, orientation, back_tracking_list):
         if child_coordinates == self.start:
             while len(back_tracking_list) > 0:
@@ -371,8 +261,8 @@ class PaFinder:
             parent_y = child_node.parent_coordinates[1]
             parent_x = child_node.parent_coordinates[0]
             parent_node = getattr(self.marked_map[parent_y][parent_x], child_node.parent_orientation)
-            move = self.get_move(child_coordinates, parent_x, parent_y)
-            turn = self.turn_decoder(child_node.parent_orientation,orientation)
+            move = Toolbox.get_move(child_coordinates, parent_x, parent_y)
+            turn = Toolbox.turn_decoder(child_node.parent_orientation, orientation)
             if turn == "None":
                 back_tracking_list.append(move)
             else:
@@ -380,9 +270,11 @@ class PaFinder:
                 back_tracking_list.append(move)
             self.back_tracking([parent_x, parent_y], child_node.parent_orientation, back_tracking_list)
 
-
     def iterator(self):
+        i = 0
         while True:
+            print(i)
+            i += 1
             cheapest_node = heapq.heappop(self.frontier)
             cheapest_x = cheapest_node[1][0]
             cheapest_y = cheapest_node[1][1]
@@ -391,7 +283,8 @@ class PaFinder:
                 best_node = getattr(self.marked_map[cheapest_y][cheapest_x], cheapest_node[2])
                 self.back_tracking(cheapest_node[1], cheapest_node[2], back_tracking_list)
                 print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
-                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ', round((self.total-1)/self.counter,2))
+                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
+                      round((self.total-1)/self.counter, 2))
                 break
             else:
                 self.current = cheapest_node[1]

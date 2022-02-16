@@ -63,7 +63,7 @@ class map_generator():
 
     def map_to_file(map:Map):
         string = map_generator.map_to_string(map.map)
-        filepath ='premade boards/board0001.txt'
+        filepath = 'testBoards/board0.txt'
         file = open(filepath,'w')
         file.write(string)
         file.close()

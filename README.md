@@ -1,13 +1,14 @@
 # AI-assignment1
 
 
-to run this in the current working directory
+To run this in the current working directory
 python main.py 'path-to/your-file.txt' 'heuristic'
 
-acceptable heuristic inputs 
-'zero'  is 1
-'min'   is 2
-'max'   is 3
-'sum'   is 4
-'better'    is 5
-'betterx3'  is 6
+> Acceptable heuristic inputs:
+<br/>'zero'  is 1
+<br/>'min'   is 2
+<br/>'max'   is 3
+<br/>'sum'   is 4
+<br/>'better'    is 5
+<br/>'betterx3'  is 6
+
