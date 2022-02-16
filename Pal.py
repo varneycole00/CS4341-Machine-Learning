@@ -6,14 +6,6 @@ from collections import deque
 from enum import Enum
 import sys
 
-class heuristic(Enum):
-    ZERO = 'zero'
-    MIN = 'min'
-    MAX = 'max'
-    SUM = 'sum'
-    better_than_sum = 'bet'
-    bet_x_three = 'bx3'
-
 
 class East:
     def __init__(self):
@@ -69,9 +61,8 @@ class MapCell:
 
 class PaFinder:
 
-    def __init__(self, map, heuristic = heuristic.ZERO):
+    def __init__(self, map):
         self.map = map
-        self.heuristic = heuristic
         self.goal = [0, 0]
         self.frontier = []
         self.exploring = []
@@ -154,18 +145,7 @@ class PaFinder:
         if (vert_dist > 0):
             better_than_sum += 1
 
-        if self.heuristic == heuristic.ZERO:
-            return 0
-        elif self.heuristic == heuristic.MIN:
-            return min(hor_dist, vert_dist)
-        elif self.heuristic == heuristic.MAX:
-            return max(hor_dist, vert_dist)
-        elif self.heuristic == heuristic.SUM:
-            return hor_dist + vert_dist
-        elif self.heuristic == heuristic.better_than_sum:
-            return better_than_sum
-        elif self.heuristic == heuristic.bet_x_three:
-            return better_than_sum * 3
+        return better_than_sum
 
     def dictionary_holder(self, action_needed, creation):
         if action_needed == "TURNING" and creation is True:
