@@ -6,6 +6,7 @@ from Pal import PaFinder
 sys.setrecursionlimit(5000)
 process = psutil.Process(os.getpid())
 
+
 def main():
     if len(sys.argv) > 2:
         file_path = sys.argv[1]
