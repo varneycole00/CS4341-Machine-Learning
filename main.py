@@ -1,7 +1,7 @@
 import sys
 import psutil, os
 from datetime import datetime
-from map_generation import map_generator,Map
+from ancillary.map_generation import map_generator
 from Pal import PaFinder
 sys.setrecursionlimit(5000)
 process = psutil.Process(os.getpid())
