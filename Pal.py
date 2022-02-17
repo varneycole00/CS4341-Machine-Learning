@@ -15,6 +15,7 @@ class Direction :
         self.cumulative_cost = 0
         self.heuristic = 0
         self.parent_coordinates = (0, 0)
+        self.current_coordinate = (0, 0)
         self.parent_orientation = ''
         self.cumulative_action = 0
         self.depth = 0
@@ -258,6 +259,8 @@ class PaFinder:
                         heapq.heappush(self.frontier, (heuristic_final_cost, [newx, newy], new_orientation))
                         # Set the cost of the cell in the marked map to the final cost.
                         new_cell.cumulative_cost = final_cost
+                        # added so we can find other spaces around it
+                        new_cell.current_coordinate = [newx, newy]
                         # Set the heuristic to the final heuristic.
                         new_cell.heuristic = heuristic_final_cost
                         new_cell.current_heuristic_estimate = heuristic_cost
@@ -283,13 +286,22 @@ class PaFinder:
             # While there is still something left in the back_tracking_list, pop it off and print it.
             goal = back_tracking_list.__getitem__(0)
             totalCost = goal.cumulative_cost
+            # totalAvg = 0 #used to estimate avg move
+            # lastValue = 0
+            # count = 0
             with open('data.csv', 'w', newline='') as csvFile :
                 writer = csv.writer(csvFile)
-                writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate'])  # TODO : add features here
+                writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Average_Space_Toward_Destination'])  # TODO : add features here
                 while len(back_tracking_list) > 0:
                     node = back_tracking_list.pop()
-                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate])
-            print("set break here")
+                    avgMove = Toolbox.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
+                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove])
+                    # used to estimate average move
+                    # if count != 0 :
+                    #     totalAvg += (lastValue - (totalCost - node.cumulative_cost)) - avgMove
+                    # count += 1
+                    # lastValue = totalCost - node.cumulative_cost
+                    # print(totalAvg / count)
 
         else:
             # child_node is the node that we are currently looking at.
