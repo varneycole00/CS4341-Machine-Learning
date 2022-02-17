@@ -1,7 +1,10 @@
 import csv
 import heapq
 import math
+import os
 import time
+
+from featurecalculator import FeatureCalculator
 from toolbox import Toolbox
 from collections import deque
 from enum import Enum
@@ -286,22 +289,34 @@ class PaFinder:
             # While there is still something left in the back_tracking_list, pop it off and print it.
             goal = back_tracking_list.__getitem__(0)
             totalCost = goal.cumulative_cost
-            # totalAvg = 0 #used to estimate avg move
+            # totalAvg1 = 0 #used to estimate avg move
+            # totalAvg2 = 0 #used to estimate avg move
             # lastValue = 0
+            # lastMove1 = 0
+            # lastMove2 = 0
             # count = 0
-            with open('data.csv', 'w', newline='') as csvFile :
+            file_exists = os.path.isfile('data.csv')
+            with open('data.csv', 'a', newline='') as csvFile :
                 writer = csv.writer(csvFile)
-                writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Average_Space_Toward_Destination'])  # TODO : add features here
+                if not file_exists :
+                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Average_Space_Toward_Destination', 'Average_Space_Toward_Destination_WDirection'])  # TODO : add features here
                 while len(back_tracking_list) > 0:
                     node = back_tracking_list.pop()
-                    avgMove = Toolbox.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
-                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove])
-                    # used to estimate average move
+                    avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
+                    avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self)
+                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove, avgMoveDir])
+                    ## used to estimate average move
                     # if count != 0 :
-                    #     totalAvg += (lastValue - (totalCost - node.cumulative_cost)) - avgMove
+                    #     totalAvg1 += (lastValue - (totalCost - node.cumulative_cost)) - lastMove1
+                    #     totalAvg2 += (lastValue - (totalCost - node.cumulative_cost)) - lastMove2
                     # count += 1
+                    # lastMove1 = avgMove
+                    # lastMove2 = avgMoveDir
                     # lastValue = totalCost - node.cumulative_cost
-                    # print(totalAvg / count)
+                # print("Avg Move")
+                # print(totalAvg1 / count)
+                # print("Dir")
+                # print(totalAvg2 / count)
 
         else:
             # child_node is the node that we are currently looking at.
