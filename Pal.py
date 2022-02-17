@@ -297,7 +297,8 @@ class PaFinder:
                 while len(back_tracking_list) > 0:
                     node = back_tracking_list.pop()
                     avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
-                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove])
+                    avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self)
+                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMoveDir])
 
         else:
             # child_node is the node that we are currently looking at.
