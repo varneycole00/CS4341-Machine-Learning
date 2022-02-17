@@ -1,3 +1,4 @@
+import csv
 import heapq
 import math
 import time
@@ -7,8 +8,9 @@ from enum import Enum
 import sys
 
 
-class East:
+class Direction :
     def __init__(self):
+        self.current_heuristic_estimate = 0
         self.filled = False
         self.cumulative_cost = 0
         self.heuristic = 0
@@ -18,38 +20,16 @@ class East:
         self.depth = 0
 
 
-class West:
-    def __init__(self):
-        self.filled = False
-        self.cumulative_cost = 0
-        self.heuristic = 0
-        self.parent_coordinates = (0,  0)
-        self.parent_orientation = ''
-        self.cumulative_action = 0
-        self.depth = 0
+class East(Direction):
+    pass
 
+class West(Direction):
+    pass
 
-class North:
-    def __init__(self):
-        self.filled = False
-        self.cumulative_cost = 0
-        self.heuristic = 0
-        self.parent_coordinates = (0, 0)
-        self.parent_orientation = ''
-        self.cumulative_action = 0
-        self.depth = 0
-
-
-class South:
-    def __init__(self):
-        self.filled = False
-        self.cumulative_cost = 0
-        self.heuristic = 0
-        self.parent_coordinates = (0, 0)
-        self.parent_orientation = ''
-        self.cumulative_action = 0
-        self.depth = 0
-
+class North(Direction):
+    pass
+class South(Direction):
+    pass
 
 class MapCell:
     def __init__(self):
@@ -258,8 +238,9 @@ class PaFinder:
                     # Gets the cost of the proposed turn and move.
                     temp_cost = self.dictionary_holder("TURNING", first, coordinates)[turn] \
                         + self.dictionary_holder("MOVE", first, [newx, newy])[move]
+                    heuristic_cost = self.heuristic_calculator(newx, newy)
                     # Adds the cost of the proposed move to the cost of the heuristic calculated at the cell x, y.
-                    heuristic_temp_cost = temp_cost + self.heuristic_calculator(newx, newy)
+                    heuristic_temp_cost = temp_cost + heuristic_cost
                     # Adds the heuristic cost to the cumulative cost that it took to get here.
                     heuristic_final_cost = heuristic_temp_cost + cumulative_cost
                     # The final actual cost is the temp cost + the cost that it took to get here. The final heuristic
@@ -279,6 +260,8 @@ class PaFinder:
                         new_cell.cumulative_cost = final_cost
                         # Set the heuristic to the final heuristic.
                         new_cell.heuristic = heuristic_final_cost
+                        new_cell.current_heuristic_estimate = heuristic_cost
+
                         # Denote that the cell has been visited.
                         new_cell.filled = True
                         # Add the parent coordinates and orientation and add the depth.
@@ -298,8 +281,16 @@ class PaFinder:
         # If the start coordinates are equal to teh coordinates currently being investigated, then it is over.
         if child_coordinates == self.start:
             # While there is still something left in the back_tracking_list, pop it off and print it.
-            while len(back_tracking_list) > 0:
-                print(back_tracking_list.pop())
+            goal = back_tracking_list.__getitem__(0)
+            totalCost = goal.cumulative_cost
+            with open('data.csv', 'w', newline='') as csvFile :
+                writer = csv.writer(csvFile)
+                writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate'])  # TODO : add features here
+                while len(back_tracking_list) > 0:
+                    node = back_tracking_list.pop()
+                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate])
+            print("set break here")
+
         else:
             # child_node is the node that we are currently looking at.
             child_node = getattr(self.marked_map[child_coordinates[1]][child_coordinates[0]], orientation)
@@ -311,14 +302,9 @@ class PaFinder:
             # to be traveled to get from the parent coordinates to the child coordinates, determining forward or bash,
             # and turn_decoder determines which turn the parent would have needed to make to get their orientation to
             # match the orientation of the child.
-            move = Toolbox.get_move(child_coordinates, parent_x, parent_y)
-            turn = Toolbox.turn_decoder(child_node.parent_orientation, orientation)
             # As in the expand_frontier function, no turn is not counted.
-            if turn == "None":
-                back_tracking_list.append(move)
-            else:
-                back_tracking_list.append(turn)
-                back_tracking_list.append(move)
+
+            back_tracking_list.append(child_node)
             # recursive call to the back_tracking function. The parent coordinates and orientation are now used.
             self.back_tracking([parent_x, parent_y], child_node.parent_orientation, back_tracking_list)
 
