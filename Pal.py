@@ -293,7 +293,7 @@ class PaFinder:
             with open('data.csv', 'a', newline='') as csvFile :
                 writer = csv.writer(csvFile)
                 if not file_exists :
-                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Average_Space_Toward_Destination'])  # TODO : add features here
+                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Average_Space_Toward_Destination_WDir'])  # TODO : add features here
                 while len(back_tracking_list) > 0:
                     node = back_tracking_list.pop()
                     avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)

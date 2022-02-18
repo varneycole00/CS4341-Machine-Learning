@@ -56,10 +56,10 @@ class FeatureCalculator :
 
         if x == gx and y == gy : return 0
         result = []
-        NorthCoord = (x + 1, y)
-        SouthCoord = (x, y+1)
-        EastCoord = (x, y + 1)
-        WestCoord = (x, y-1)
+        NorthCoord = (x, y - 1)
+        SouthCoord = (x, y + 1)
+        EastCoord = (x + 1, y)
+        WestCoord = (x - 1, y)
 
 
 
@@ -88,7 +88,6 @@ class FeatureCalculator :
                                                    ('East', EastCoord), ('West', WestCoord),
                                                    ('South'), Pal)
         elif x > gx and y > gy:
-            list_of_points = [(x - 1, y, x - 1, y + 1), (x, y + 1, x - 1, y + 1)]
             result = FeatureCalculator.find_costs_diag(direction, x, y,
                                              ('West', WestCoord), ('North', NorthCoord),
                                              ('South'), ('East'), Pal)
@@ -108,12 +107,12 @@ class FeatureCalculator :
 
         # sums the terrain cost of all forward moves if the goal is directly horizontal or vertical to the current point
         for coordiante in list_of_points :
-            x1 = coordiante[0]
-            y1 = coordiante[1]
+            x1 = coordiante[0][0]
+            y1 = coordiante[0][1]
 
             if x1 in range(len(Pal.map[0])) and y1 in range(len(Pal.map)):
                 terrain_cost = Pal.map[y1][x1]
-                if coordiante[2] :
+                if coordiante[1] :
                     total_terrain_cost += 3
                     number_of_points += 1
                 total_terrain_cost += terrain_cost if isinstance(terrain_cost, int) else 1
