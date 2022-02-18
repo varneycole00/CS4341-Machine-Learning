@@ -7,6 +7,7 @@ from Pal import PaFinder, heuristic
 sys.setrecursionlimit(5000)
 process = psutil.Process(os.getpid())
 
+def main():
 def determine_heuristic(input):
     if input.lower() == '5':
         return heuristic.better_than_sum
@@ -60,3 +61,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# if __name__ == "__main__":
+#     main()

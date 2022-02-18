@@ -319,11 +319,12 @@ class PaFinder:
             with open('data.csv', 'a', newline='') as csvFile :
                 writer = csv.writer(csvFile)
                 if not file_exists :
-                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Average_Space_Toward_Destination'])  # TODO : add features here
+                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Average_Space_Toward_Destination_WDir'])  # TODO : add features here
                 while len(back_tracking_list) > 0:
                     node = back_tracking_list.pop()
                     avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
-                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove])
+                    avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self)
+                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMoveDir])
 
         else:
             # child_node is the node that we are currently looking at.
@@ -361,9 +362,9 @@ class PaFinder:
                 # order. The reason that this is not done within the node itself is to cut down on the size of the
                 # objects that are being manipulated.
                 self.back_tracking(cheapest_node[1], cheapest_node[2], back_tracking_list)
-                print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
-                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
-                      round((self.total-1)/self.counter, 2))
+                # print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
+                #       100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
+                #       round((self.total-1)/self.counter, 2))
                 break
             else:
                 # Expand the frontier on the coordinates (cheapest_node[1]) and orientation (cheapest_node[2]) of the
