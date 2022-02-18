@@ -54,7 +54,7 @@ class MapCell:
 
 class PaFinder:
 
-    def __init__(self, map, heuristic = heuristic.ZERO):
+    def __init__(self, map, heuristic = heuristic.better_than_sum):
         self.map = map
         self.heuristic = heuristic
         self.goal = [0, 0]
@@ -174,8 +174,6 @@ class PaFinder:
             return hor_dist + vert_dist
         elif self.heuristic == heuristic.better_than_sum:
             return better_than_sum
-        elif self.heuristic == heuristic.bet_x_three:
-            return better_than_sum * 3
         elif self.heuristic == heuristic.bet_x_three:
             return better_than_sum * 3
         elif self.heuristic == heuristic.test:
@@ -363,9 +361,9 @@ class PaFinder:
                 # order. The reason that this is not done within the node itself is to cut down on the size of the
                 # objects that are being manipulated.
                 self.back_tracking(cheapest_node[1], cheapest_node[2], back_tracking_list)
-                print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
-                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
-                      round((self.total-1)/self.counter, 2))
+                # print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
+                #       100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
+                #       round((self.total-1)/self.counter, 2))
                 break
             else:
                 # Expand the frontier on the coordinates (cheapest_node[1]) and orientation (cheapest_node[2]) of the
