@@ -128,25 +128,30 @@ class FeatureCalculator :
         list_of_points = []
         total_terrain_cost = 0
         number_of_points = 0
+        NorthCoord = (x, y - 1)
+        SouthCoord = (x, y + 1)
+        EastCoord = (x + 1, y)
+        WestCoord = (x - 1, y)
+
         # !!does not take into account directionality <- we could make this better
         # Each if statement accounts for one of the eight directions the goal can be from the current point
         #   with this it calculates the average terrain cost of spaces that the piece is likely to take
         if   x == gx and y < gy:
-            list_of_points = [(x, y+1), (x - 1, y),(x + 1, y) ]
+            list_of_points = [SouthCoord, WestCoord, EastCoord ]
         elif x < gx and y < gy:
-            list_of_points = [(x, y + 1), (x + 1, y)]
+            list_of_points = [SouthCoord, EastCoord]
         elif x < gx and y == gy:
-            list_of_points = [(x, y + 1), (x, y - 1), (x + 1, y)]
+            list_of_points = [SouthCoord, NorthCoord, EastCoord]
         elif x < gx and y > gy:
-            list_of_points = [(x + 1, y), (x, y - 1)]
+            list_of_points = [EastCoord, NorthCoord]
         elif x == gx and y > gy:
-            list_of_points = [(x - 1, y), (x + 1, y), (x, y - 1)]
+            list_of_points = [WestCoord, EastCoord, NorthCoord]
         elif x > gx and y > gy:
-            list_of_points = [(x - 1, y, x - 1, y + 1), (x, y + 1, x - 1, y + 1)]
+            list_of_points = [WestCoord, NorthCoord]
         elif x > gx and y == gy:
-            list_of_points = [(x, y + 1), (x, y - 1), (x - 1, y)]
+            list_of_points = [SouthCoord, NorthCoord, WestCoord]
         elif x > gx and y < gy:
-            list_of_points = [(x - 1, y), (x, y - 1)]
+            list_of_points = [WestCoord, SouthCoord]
 
         # sums the terrain cost of all forward moves if the goal is directly horizontal or vertical to the current point
         for coordiante in list_of_points :
@@ -156,16 +161,13 @@ class FeatureCalculator :
             if x1 in range(len(map[0])) and y1 in range(len(map)):
                 terrain_cost = map[y1][x1]
                 total_terrain_cost += terrain_cost if isinstance(terrain_cost, int) else 1
-                number_of_points += 1  # one forward move and one bash
+                total_terrain_cost += 3
+                number_of_points += 2  # one forward move and one bash
 
-        # numbers were messed with to get an answer
-        # supposed to account for bashes
-        total_terrain_cost += 6  # gives best results
+
         turn_cost = map[y][x]
         total_terrain_cost += 2 *  math.ceil(turn_cost if isinstance(turn_cost, int) else 1)
-        # 2 turns 1 bash? Even though the 6 from before accounts for two bashes this seems to work better
-        # maybe bashes are less likely?
-        number_of_points += 3
+        number_of_points += 2
 
 
         return total_terrain_cost / number_of_points if number_of_points != 0 else 0

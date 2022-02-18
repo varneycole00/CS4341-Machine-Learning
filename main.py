@@ -29,28 +29,7 @@ def main():
         map = map_generator.generate_random_map(rows=500, cols=500)
         map_generator.map_to_file(map)
 
-    print('path to solution: for Heuristic 7 Avg with Dir')
-    initial_mem = process.memory_info().rss
-    start = datetime.now()
-
-    finder = PaFinder(map.map, heuristic = determine_heuristic("8"))
-    finder.iterator()
-    print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
-    print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
-    print('time elapsed: ' + str(datetime.now()-start))
-
-
-    print('\npath to solution: for Heuristic 7 Avg')
-    initial_mem = process.memory_info().rss
-    start = datetime.now()
-
-    finder = PaFinder(map.map, heuristic = determine_heuristic("7"))
-    finder.iterator()
-    print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
-    print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
-    print('time elapsed: ' + str(datetime.now()-start))
-
-    print('\npath to solution: for Heuristc 5 (Custom Heruistic)')
+    print('path to solution')
     initial_mem = process.memory_info().rss
     start = datetime.now()
 
@@ -60,15 +39,6 @@ def main():
     print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
     print('time elapsed: ' + str(datetime.now()-start))
 
-    print('\npath to solution: Heuristic 6 (Custom * 3)')
-    initial_mem = process.memory_info().rss
-    start = datetime.now()
-
-    finder = PaFinder(map.map, heuristic = determine_heuristic("6"))
-    finder.iterator()
-    print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
-    print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
-    print('time elapsed: ' + str(datetime.now()-start))
 
 
 if __name__ == "__main__":
