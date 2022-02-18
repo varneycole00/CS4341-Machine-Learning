@@ -18,6 +18,7 @@ class heuristic(Enum):
     better_than_sum = 'bet'
     bet_x_three = 'bx3'
     test = 'test'
+    test2 = 'test2'
 
 class Direction :
     def __init__(self):
@@ -151,7 +152,7 @@ class PaFinder:
         return int(forward_cost)
 
     # Heuristic calculator will only calculate the better_than_sum heuristic (per Assignment 3 guidelines)
-    def heuristic_calculator(self, current_x, current_y):
+    def heuristic_calculator(self, current_x, current_y, orientation):
         goal_x = self.goal[0]
         goal_y = self.goal[1]
         hor_dist = abs(goal_x-current_x)
@@ -179,9 +180,9 @@ class PaFinder:
             return better_than_sum * 3
         elif self.heuristic == heuristic.test:
             return 2.5425 * better_than_sum + 2.1414 * FeatureCalculator.get_avg_move_toward_goal(current_x, current_y, self.goal[0], self.goal[1], self.map) + 0.9064
-
+        elif self.heuristic == heuristic.test2:
+            return 2.5642 * better_than_sum + 1.1546 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, current_x, current_y, self) + 4.3586
         # return better_than_sum
-
     # Dictionary of the all possible turns and movements.
     def dictionary_holder(self, action_needed, creation, coordinates):
         # There is a different list for "creation" because at the start (i.e. when on the start node) it is possible to
@@ -268,7 +269,7 @@ class PaFinder:
                     # Gets the cost of the proposed turn and move.
                     temp_cost = self.dictionary_holder("TURNING", first, coordinates)[turn] \
                         + self.dictionary_holder("MOVE", first, [newx, newy])[move]
-                    heuristic_cost = self.heuristic_calculator(newx, newy)
+                    heuristic_cost = self.heuristic_calculator(newx, newy, new_orientation)
                     # Adds the cost of the proposed move to the cost of the heuristic calculated at the cell x, y.
                     heuristic_temp_cost = temp_cost + heuristic_cost
                     # Adds the heuristic cost to the cumulative cost that it took to get here.
@@ -362,9 +363,9 @@ class PaFinder:
                 # order. The reason that this is not done within the node itself is to cut down on the size of the
                 # objects that are being manipulated.
                 self.back_tracking(cheapest_node[1], cheapest_node[2], back_tracking_list)
-                # print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
-                #       100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
-                #       round((self.total-1)/self.counter, 2))
+                print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
+                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
+                      round((self.total-1)/self.counter, 2))
                 break
             else:
                 # Expand the frontier on the coordinates (cheapest_node[1]) and orientation (cheapest_node[2]) of the
