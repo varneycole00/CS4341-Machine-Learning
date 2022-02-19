@@ -65,41 +65,41 @@ class FeatureCalculator :
 
         if   x == gx and y < gy:
             result = FeatureCalculator.find_costs_horzOrVert(direction, x, y,
-                                                   ('South', SouthCoord),
-                                                   ('East', EastCoord), ('West', WestCoord),
-                                                   ('North'), Pal)
+                                                             ('South', SouthCoord),
+                                                             ('East', EastCoord), ('West', WestCoord),
+                                                             ('North'), Pal)
 
         elif x < gx and y < gy:
             result = FeatureCalculator.find_costs_diag(direction, x, y,
-                                             ('South', SouthCoord), ('East', EastCoord),
-                                             ('West'), ('North'), Pal)
+                                                       ('South', SouthCoord), ('East', EastCoord),
+                                                       ('West'), ('North'), Pal)
         elif x < gx and y == gy:
             result = FeatureCalculator.find_costs_horzOrVert(direction, x, y,
-                                                   ('East', EastCoord),
-                                                   ('South', SouthCoord), ('North', NorthCoord),
-                                                   ('West'), Pal)
+                                                             ('East', EastCoord),
+                                                             ('South', SouthCoord), ('North', NorthCoord),
+                                                             ('West'), Pal)
         elif x < gx and y > gy:
             result = FeatureCalculator.find_costs_diag(direction, x, y,
-                                             ('East', EastCoord), ('North', NorthCoord),
-                                             ('West'), ('South'), Pal)
+                                                       ('East', EastCoord), ('North', NorthCoord),
+                                                       ('West'), ('South'), Pal)
         elif x == gx and y > gy:
             result = FeatureCalculator.find_costs_horzOrVert(direction, x, y,
-                                                   ('North', NorthCoord),
-                                                   ('East', EastCoord), ('West', WestCoord),
-                                                   ('South'), Pal)
+                                                             ('North', NorthCoord),
+                                                             ('East', EastCoord), ('West', WestCoord),
+                                                             ('South'), Pal)
         elif x > gx and y > gy:
             result = FeatureCalculator.find_costs_diag(direction, x, y,
-                                             ('West', WestCoord), ('North', NorthCoord),
-                                             ('South'), ('East'), Pal)
+                                                       ('West', WestCoord), ('North', NorthCoord),
+                                                       ('South'), ('East'), Pal)
         elif x > gx and y == gy:
             result = FeatureCalculator.find_costs_horzOrVert(direction, x, y,
-                                                   ('West', WestCoord),
-                                                   ('South', SouthCoord), ('North', NorthCoord),
-                                                   ('East'), Pal)
+                                                             ('West', WestCoord),
+                                                             ('South', SouthCoord), ('North', NorthCoord),
+                                                             ('East'), Pal)
         elif x > gx and y < gy:
             result = FeatureCalculator.find_costs_diag(direction, x, y,
-                                             ('South', SouthCoord), ('West', WestCoord),
-                                             ('North'), ('East'), Pal)
+                                                       ('South', SouthCoord), ('West', WestCoord),
+                                                       ('North'), ('East'), Pal)
 
         list_of_points = result[0]
         total_terrain_cost = result[1]
@@ -128,6 +128,7 @@ class FeatureCalculator :
         list_of_points = []
         total_terrain_cost = 0
         number_of_points = 0
+        number_of_bashes = 0
         NorthCoord = (x, y - 1)
         SouthCoord = (x, y + 1)
         EastCoord = (x + 1, y)
@@ -138,20 +139,29 @@ class FeatureCalculator :
         #   with this it calculates the average terrain cost of spaces that the piece is likely to take
         if   x == gx and y < gy:
             list_of_points = [SouthCoord, WestCoord, EastCoord ]
+            number_of_bashes = 1
         elif x < gx and y < gy:
             list_of_points = [SouthCoord, EastCoord]
+            number_of_bashes = 1
         elif x < gx and y == gy:
             list_of_points = [SouthCoord, NorthCoord, EastCoord]
+            number_of_bashes = 1
         elif x < gx and y > gy:
             list_of_points = [EastCoord, NorthCoord]
+            number_of_bashes = 1
         elif x == gx and y > gy:
             list_of_points = [WestCoord, EastCoord, NorthCoord]
+            number_of_bashes = 1
         elif x > gx and y > gy:
             list_of_points = [WestCoord, NorthCoord]
+            number_of_bashes = 1
         elif x > gx and y == gy:
             list_of_points = [SouthCoord, NorthCoord, WestCoord]
+            number_of_bashes = 1
         elif x > gx and y < gy:
             list_of_points = [WestCoord, SouthCoord]
+            number_of_bashes = 1
+
 
         # sums the terrain cost of all forward moves if the goal is directly horizontal or vertical to the current point
         for coordiante in list_of_points :
@@ -161,10 +171,10 @@ class FeatureCalculator :
             if x1 in range(len(map[0])) and y1 in range(len(map)):
                 terrain_cost = map[y1][x1]
                 total_terrain_cost += terrain_cost if isinstance(terrain_cost, int) else 1
-                total_terrain_cost += 3
-                number_of_points += 2  # one forward move and one bash
+                number_of_points += 1  # one forward move and one bash
 
-
+        number_of_points += number_of_bashes
+        total_terrain_cost += 3 * number_of_bashes
         turn_cost = map[y][x]
         total_terrain_cost += 2 *  math.ceil(turn_cost if isinstance(turn_cost, int) else 1)
         number_of_points += 2
