@@ -7,6 +7,7 @@ import time
 from featurecalculator import FeatureCalculator
 from toolbox import Toolbox
 from collections import deque
+import matplotlib.pyplot as plt
 from enum import Enum
 import sys
 
@@ -22,27 +23,44 @@ class heuristic(Enum):
 
 class Direction :
     def __init__(self):
-        self.current_heuristic_estimate = 0
         self.filled = False
         self.cumulative_cost = 0
+        # heuristic is the final heuristic value, the one that is used in the frontier
         self.heuristic = 0
+        # heuristic_roc is the rate of change of the heuristic from the parent to the child
+        # (child.heuristic - parent.heuristic)
+        self.heuristic_roc = 0
+        # cost_roc is the rate of change of the cumulative cost to get to that node from the parent to the child
+        # (child.cost - parent.cost)
+        self.cost_roc = 0
+        # current_heuristic_estimate is the predicted cost from that point to the goal.
+        self.current_heuristic_estimate = 0
+        # heuristic_estimate_roc is the rate of change of the predicted cost to the goal from that node, from
+        # the parent to the child (child.current_heuristic_estimate - parent.current_heuristic_estimate)
+        self.heuristic_estimate_roc = 0
         self.parent_coordinates = (0, 0)
         self.current_coordinate = (0, 0)
         self.parent_orientation = ''
         self.cumulative_action = 0
         self.depth = 0
+        self.orientation = ''
 
 
 class East(Direction):
     pass
 
+
 class West(Direction):
     pass
 
+
 class North(Direction):
     pass
+
+
 class South(Direction):
     pass
+
 
 class MapCell:
     def __init__(self):
@@ -84,9 +102,10 @@ class PaFinder:
         # can be seen in the class definitions.
         self.marked_map = self.map_map()
         # Initializing the visited matrix, a binary matrix where all coordinates are initially set to False. This is
-        # used to simplify calculations in the expand frontier process. If a node has not been visited, then there
+        # used to simplify calculations in the expand_frontier process. If a node has not been visited, then there
         # is no reason to run any calculations checking for best heuristic at that position.
         self.visited = self.visited_function()
+
     # Making the visited matrix.
     def visited_function(self):
         new_visited = []
@@ -97,6 +116,7 @@ class PaFinder:
                 temp_row.append(new_cell)
             new_visited.append(temp_row)
         return new_visited
+
     # Making the marked_map ~ function is called map_map because I ran out of ideas.
     def map_map(self):
         new_map = []
@@ -233,9 +253,10 @@ class PaFinder:
     def expand_frontier(self, coordinates, orientation):
         # cumulative_cost is the cost of the path to this node, the cumulative cost is taken from the marked_map cell
         # at the coordinates, and the specific orientation of the node that is being expanded.
-        cumulative_cost = (getattr(self.marked_map[coordinates[1]][coordinates[0]], orientation)).cumulative_cost
-        # List of actions leading to this point. Makes everything easier.
-        cumulative_action = (getattr(self.marked_map[coordinates[1]][coordinates[0]], orientation)).cumulative_action
+        parent = (getattr(self.marked_map[coordinates[1]][coordinates[0]], orientation))
+        cumulative_cost = parent.cumulative_cost
+        # Number of actions leading to this point.
+        cumulative_action = parent.cumulative_action
         # Depth counts the number of nodes that it took to get to this node.
         depth = (getattr(self.marked_map[coordinates[1]][coordinates[0]], orientation)).depth
         # If this is the first time through (i.e. if we are at the start) then true so that the special starting
@@ -292,9 +313,21 @@ class PaFinder:
                         # added so we can find other spaces around it
                         new_cell.current_coordinate = [newx, newy]
                         # Set the heuristic to the final heuristic.
+                        new_cell.orientation = new_orientation
                         new_cell.heuristic = heuristic_final_cost
                         new_cell.current_heuristic_estimate = heuristic_cost
-
+                        # ~~~~~~~~~~~~~~~~~~~~
+                        # For the purpose of training function
+                        if first:
+                            new_cell.heuristic_roc = 0
+                            new_cell.cost_roc = 0
+                            new_cell.current_heuristic_estimate_roc = 0
+                        if not first:
+                            new_cell.heuristic_roc = new_cell.heuristic - parent.heuristic
+                            new_cell.cost_roc = new_cell.cumulative_cost - parent.cumulative_cost
+                            new_cell.current_heuristic_estimate_roc = new_cell.current_heuristic_estimate \
+                                                                      - parent.current_heuristic_estimate
+                        # ~~~~~~~~~~~~~~~~~~~~
                         # Denote that the cell has been visited.
                         new_cell.filled = True
                         # Add the parent coordinates and orientation and add the depth.
@@ -348,11 +381,14 @@ class PaFinder:
     def iterator(self):
         # While loop is used here to make this a tail recursion so that it does not overflow the stack.
         while True:
+
+            print(self.frontier)
             # The cheapest node is the popped from the frontier.
             cheapest_node = heapq.heappop(self.frontier)
             # Getting the x and y coordinates of the cheapest node.
             cheapest_x = cheapest_node[1][0]
             cheapest_y = cheapest_node[1][1]
+            print("Expand:", cheapest_node[1], cheapest_node[2], "Heur:", cheapest_node[0])
             # If the cheapest node is the goal, then it is all over.
             if cheapest_node[1] == self.goal:
                 back_tracking_list = deque()
@@ -366,8 +402,18 @@ class PaFinder:
                 print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
                       100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
                       round((self.total-1)/self.counter, 2))
+
+                return best_node, self.marked_map, self.visited
+                # plt.figure()
+                # plt.plot(best_node.x_axis, best_node.heuristic_roc, label="Heuristic Rate of Change")
+                # plt.plot(best_node.x_axis, best_node.cost_roc, label="Cost Rate of Change")
+                # plt.plot(best_node.x_axis, best_node.difference_roc, label="Difference Rate of Change")
+                # plt.legend()
+                # plt.title("Rate of Change of Best Path")
+                # plt.show()
                 break
             else:
                 # Expand the frontier on the coordinates (cheapest_node[1]) and orientation (cheapest_node[2]) of the
                 # cheapest node.
+
                 self.expand_frontier(cheapest_node[1], cheapest_node[2])
