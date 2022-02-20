@@ -358,6 +358,7 @@ class PaFinder:
                     node = back_tracking_list.pop()
                     avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
                     avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self)
+                    # TODO add heuristic_roc, cost_roc, current_heuristic_estimate_roc
                     writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove, avgMoveDir, (avgMove + avgMoveDir)/2])
 
         else:
