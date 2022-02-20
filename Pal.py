@@ -19,6 +19,7 @@ class heuristic(Enum):
     bet_x_three = 'bx3'
     test = 'test'
     test2 = 'test2'
+    test3 = 'test3'
 
 class Direction :
     def __init__(self):
@@ -182,6 +183,8 @@ class PaFinder:
             return 2.5425 * better_than_sum + 2.1414 * FeatureCalculator.get_avg_move_toward_goal(current_x, current_y, self.goal[0], self.goal[1], self.map) + 0.9064
         elif self.heuristic == heuristic.test2:
             return 2.5642 * better_than_sum + 1.1546 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, current_x, current_y, self) + 4.3586
+        elif self.heuristic == heuristic.test3:
+            return 2.5419 * better_than_sum + 2.4206 * FeatureCalculator.get_avg_move_toward_goal(current_x, current_y, self.goal[0], self.goal[1], self.map) + -0.8926 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, current_x, current_y, self) + 0.5554
         # return better_than_sum
     # Dictionary of the all possible turns and movements.
     def dictionary_holder(self, action_needed, creation, coordinates):

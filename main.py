@@ -16,6 +16,8 @@ def determine_heuristic(input):
         return heuristic.test
     elif input.lower() == '8':
         return heuristic.test2
+    elif input.lower() == '9':
+        return heuristic.test3
     return heuristic.ZERO
 
 
@@ -45,6 +47,16 @@ def main():
     start = datetime.now()
 
     finder = PaFinder(map.map, heuristic = determine_heuristic("7"))
+    finder.iterator()
+    print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
+    print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
+    print('time elapsed: ' + str(datetime.now()-start))
+
+    print('\npath to solution: for Heuristic 7 both averages')
+    initial_mem = process.memory_info().rss
+    start = datetime.now()
+
+    finder = PaFinder(map.map, heuristic = determine_heuristic("9"))
     finder.iterator()
     print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
     print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
