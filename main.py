@@ -35,7 +35,7 @@ def main():
         map = map_generator.generate_random_map(rows=650, cols=650)
         heur = determine_heuristic(sys.argv[1])
     else:
-        map = map_generator.generate_random_map(rows=650, cols=650)
+        map = map_generator.generate_random_map(rows=20, cols=20)
         heur = heuristic.ZERO
 
     print('path to solution:')
