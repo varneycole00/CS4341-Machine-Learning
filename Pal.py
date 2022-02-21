@@ -7,7 +7,7 @@ import time
 from featurecalculator import FeatureCalculator
 from toolbox import Toolbox
 from collections import deque
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from enum import Enum
 import sys
 
@@ -84,6 +84,7 @@ class PaFinder:
         self.total = 0
         self.goal_reached = False
         self.goal_node = []
+        self.goal_area =[]
         self.start = []
 
         heapq.heapify(self.frontier)
@@ -97,6 +98,10 @@ class PaFinder:
                     self.exploring = [x, y]
                     self.start = [x, y]
                 elif self.map[y][x] == "G":
+                    # setting spaces around the goal
+                    self.goal_area.append([[x - 1, y + 1], [x, y + 1], [x + 1, y + 1]])
+                    self.goal_area.append([[x - 1, y], [x, y], [x + 1, y]])
+                    self.goal_area.append([[x - 1, y - 1], [x, y - 1], [x + 1, y - 1]])
                     # Setting the goal coordinates once it is found.
                     self.goal = [x, y]
         # Initializing the marked_map. The marked map is used to store the four nodes that are possible at each
@@ -203,7 +208,7 @@ class PaFinder:
         elif self.heuristic == heuristic.test:
             return 2.5425 * better_than_sum + 2.1414 * FeatureCalculator.get_avg_move_toward_goal(current_x, current_y, self.goal[0], self.goal[1], self.map) + 0.9064
         elif self.heuristic == heuristic.test2:
-            return 2.5642 * better_than_sum + 1.1546 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, current_x, current_y, self) + 4.3586
+            return 2.5642 * better_than_sum + 1.1546 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, True, current_x, current_y, self) + 4.3586
         # return better_than_sum
     # Dictionary of the all possible turns and movements.
     def dictionary_holder(self, action_needed, creation, coordinates):
@@ -358,13 +363,11 @@ class PaFinder:
             with open('data.csv', 'a', newline='') as csvFile :
                 writer = csv.writer(csvFile)
                 if not file_exists :
-                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Avg_Terrain_Twrd_Goal', 'Avg_Terrain_Twrd_GoalWDir', 'Avg_of_both_Terrain_Twrd_Goal'])  # TODO : add features here
+                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Intelligent_Estimate'])  # TODO : add features here
                 while len(back_tracking_list) > 0:
                     node = back_tracking_list.pop()
-                    avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
-                    avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self)
-                    # TODO add heuristic_roc, cost_roc, heuristic_estimate_roc, heuristic_estimate_avg
-                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove, avgMoveDir, (avgMove + avgMoveDir)/2])
+                    intel_est = FeatureCalculator.estimate_cost_with_knowledge(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self.heuristic_calculator(node.current_coordinate[0], node.current_coordinate[1], type(node).__name__), self)
+                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, intel_est])
 
         else:
             # child_node is the node that we are currently looking at.
@@ -388,13 +391,13 @@ class PaFinder:
         # While loop is used here to make this a tail recursion so that it does not overflow the stack.
         while True:
 
-            print(self.frontier)
+            # print(self.frontier)
             # The cheapest node is the popped from the frontier.
             cheapest_node = heapq.heappop(self.frontier)
             # Getting the x and y coordinates of the cheapest node.
             cheapest_x = cheapest_node[1][0]
             cheapest_y = cheapest_node[1][1]
-            print("Expand:", cheapest_node[1], cheapest_node[2], "Heur:", cheapest_node[0])
+            # print("Expand:", cheapest_node[1], cheapest_node[2], "Heur:", cheapest_node[0])
             # If the cheapest node is the goal, then it is all over.
             if cheapest_node[1] == self.goal:
                 back_tracking_list = deque()
@@ -405,9 +408,9 @@ class PaFinder:
                 # order. The reason that this is not done within the node itself is to cut down on the size of the
                 # objects that are being manipulated.
                 self.back_tracking(cheapest_node[1], cheapest_node[2], back_tracking_list)
-                print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
-                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
-                      round((self.total-1)/self.counter, 2))
+                # print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
+                #       100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
+                #       round((self.total-1)/self.counter, 2))
 
                 return best_node, self.marked_map, self.visited
                 # plt.figure()
