@@ -63,7 +63,7 @@ class FeatureCalculator :
             result1 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('S', Pal)
             result2 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('W', Pal)
 
-        return (result1[0] + result2[0]) / (result1[1] + result2[1])
+        return [(result1[0] + result2[0]), (result1[1] + result2[1])]
 
 
 
