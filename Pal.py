@@ -35,10 +35,10 @@ class Direction :
         # (child.cost - parent.cost)
         self.cost_roc = 0
         # current_heuristic_estimate is the predicted cost from that point to the goal.
-        self.current_heuristic_estimate = 0
+        self.estimated_CTG = 0
         # heuristic_estimate_roc is the rate of change of the predicted cost to the goal from that node, from
         # the parent to the child (child.current_heuristic_estimate - parent.current_heuristic_estimate)
-        self.heuristic_estimate_roc = 0
+        self.estimated_CTG_roc = 0
         # heuristic_estimate_avg is the running average of the change towards/away from the goal.
         self.estimated_CTG_roc_SUM = 0
         self.parent_coordinates = (0, 0)
@@ -378,7 +378,7 @@ class PaFinder:
                     old_cell = getattr(self.marked_map[newy][newx], new_orientation)
                     # If the new cell is empty, go right ahead, and if the heuristic of the new cell is greater than
                     # the new heuristic that we just calculated, then we cna move ahead.
-                    if not new_cell.filled or new_cell.heuristic > heuristic_final_cost:
+                    if not old_cell.filled or old_cell.new_heuristic_final_cost > new_heuristic_final_cost:
                         # Add the coordinates and orientation that we just found to the frontier. The frontier is a min
                         # heap sorted by the heuristic.
                         heapq.heappush(self.frontier, (new_heuristic_final_cost, [newx, newy], new_orientation))
@@ -386,22 +386,8 @@ class PaFinder:
                         new_cell.current_coordinate = [newx, newy]
                         # Set the heuristic to the final heuristic.
                         new_cell.orientation = new_orientation
-                        new_cell.heuristic = heuristic_final_cost
-                        new_cell.current_heuristic_estimate = heuristic_cost
-                        # ~~~~~~~~~~~~~~~~~~~~
-                        # For the purpose of training function
-                        if first:
-                            new_cell.heuristic_roc = 0
-                            new_cell.cost_roc = 0
-                            new_cell.heuristic_estimate_roc = 0
-                            new_cell.current_heuristic_estimate_avg = heuristic_cost
-                        if not first:
-                            new_cell.heuristic_roc = new_cell.heuristic - parent.heuristic
-                            new_cell.cost_roc = new_cell.cumulative_cost - parent.cumulative_cost
-                            new_cell.heuristic_estimate_roc = new_cell.current_heuristic_estimate \
-                                                                      - parent.current_heuristic_estimate
-                            new_cell.heuristic_roc_sum = (parent.heuristic_roc_sum + new_cell.cost_roc)
-                        # ~~~~~~~~~~~~~~~~~~~~
+                        new_cell.new_heuristic_final_cost = new_heuristic_final_cost
+
                         # Denote that the cell has been visited.
                         new_cell.filled = True
                         # Add the parent coordinates and orientation and add the depth.
@@ -426,17 +412,17 @@ class PaFinder:
             # While there is still something left in the back_tracking_list, pop it off and print it.
             goal = back_tracking_list.__getitem__(0)
             totalCost = goal.cumulative_cost
-            file_exists = os.path.isfile('data.csv')
-            with open('data.csv', 'a', newline='') as csvFile :
-                writer = csv.writer(csvFile)
-                if not file_exists :
-                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Avg_Terrain_Cost_WODir', 'Avg_Terrain_Cost_WDir', 'Avg_Terrain_WAWODir', 'Heuristic_Estimate_ROC','Cost_ROC', 'Heuristic_ROC', 'Heuristic_Estimate_Avg', 'Heuristic_wGoal_Knowledge'])
-                while len(back_tracking_list) > 0:
-                    node = back_tracking_list.pop()
-                    avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
-                    avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, True, node.current_coordinate[0], node.current_coordinate[1], self)
-                    intel_est = FeatureCalculator.estimate_cost_with_knowledge(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self.heuristic_calculator(node.current_coordinate[0], node.current_coordinate[1], type(node).__name__), self)
-                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove, avgMoveDir, (avgMove + avgMoveDir) / 2, node.heuristic_estimate_roc, node.cost_roc, node.heuristic_roc, node.heuristic_roc_sum / node.depth, intel_est])
+            # file_exists = os.path.isfile('data.csv')
+            # with open('data.csv', 'a', newline='') as csvFile :
+            #     writer = csv.writer(csvFile)
+            #     if not file_exists :
+            #         writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Avg_Terrain_Cost_WODir', 'Avg_Terrain_Cost_WDir', 'Avg_Terrain_WAWODir', 'Heuristic_Estimate_ROC','Cost_ROC', 'Heuristic_ROC', 'Heuristic_Estimate_Avg', 'Heuristic_wGoal_Knowledge'])
+            #     while len(back_tracking_list) > 0:
+            #         node = back_tracking_list.pop()
+            #         avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
+            #         avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, True, node.current_coordinate[0], node.current_coordinate[1], self)
+            #         intel_est = FeatureCalculator.estimate_cost_with_knowledge(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self.get_better_than_sum(node.current_coordinate[0], node.current_coordinate[1]), self)
+            #         writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove, avgMoveDir, (avgMove + avgMoveDir) / 2, node.estimated_CTG_roc, node.cost_roc, node.heuristic_roc, node.estimated_CTG_roc_SUM / node.depth, intel_est])
 
         else:
             # child_node is the node that we are currently looking at.
