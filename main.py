@@ -1,6 +1,10 @@
+import csv
 import sys
 import psutil, os
 from datetime import datetime
+
+from tqdm import tqdm
+
 from ancillary.map_generation import map_generator
 from Pal import PaFinder, heuristic
 
@@ -19,60 +23,41 @@ def determine_heuristic(input):
     return heuristic.ZERO
 
 
-def main():
-    if len(sys.argv) > 2:
-        file_path = sys.argv[1]
-        file = open(file_path)
-        map = map_generator.file_to_map(file)
+def main(board_number, file):
+    file = open(file, "r")
+    map = map_generator.file_to_map(file)
 
-    else:
-        map = map_generator.generate_random_map(rows=500, cols=500)
-        map_generator.map_to_file(map)
-
-    print('path to solution: test1')
-    initial_mem = process.memory_info().rss
     start = datetime.now()
+    finderOurHeuristic = PaFinder(map.map, heuristic = determine_heuristic("8"))
+    ourHeuristicResult = finderOurHeuristic.iterator()
+    endTime =  datetime.now()
+    ourHeuristic = ourHeuristicResult[0]
+    timeElapsedOurHeuristic = (endTime-start).total_seconds()
 
-    finder = PaFinder(map.map, heuristic = determine_heuristic("7"))
-    finder.iterator()
-    print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
-    print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
-    print('time elapsed: ' + str(datetime.now()-start))
 
-
-    print('\npath to solution: test2')
-    initial_mem = process.memory_info().rss
     start = datetime.now()
+    finderHeuristic5 = PaFinder(map.map, heuristic = determine_heuristic("5"))
+    heuristic5Result = finderHeuristic5.iterator()
+    heuristic5 = heuristic5Result[0]
+    timeElapsedHeuristic5 = (datetime.now()-start).total_seconds()
 
-    finder = PaFinder(map.map, heuristic = determine_heuristic("8"))
-    finder.iterator()
-    print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
-    print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
-    print('time elapsed: ' + str(datetime.now()-start))
-
-    print('\npath to solution: for Heuristc 5 (Custom Heruistic)')
-    initial_mem = process.memory_info().rss
     start = datetime.now()
+    finderHeuristic6 = PaFinder(map.map, heuristic = determine_heuristic("6"))
+    heuristic6Result = finderHeuristic6.iterator()
+    heuristic6 = heuristic6Result[0]
+    timeElapsedHeuristic6 = (datetime.now()-start).total_seconds()
 
-    finder = PaFinder(map.map, heuristic = determine_heuristic("5"))
-    finder.iterator()
-    print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
-    print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
-    print('time elapsed: ' + str(datetime.now()-start))
 
-    print('\npath to solution: for Heuristc 5 (Custom Heruistic * 3)')
-    initial_mem = process.memory_info().rss
-    start = datetime.now()
-
-    finder = PaFinder(map.map, heuristic = determine_heuristic("6"))
-    finder.iterator()
-    print('map size: ' + str(len(map.map)) + ' x ' + str(len(map.map)))
-    print('memory used: ' + str((process.memory_info().rss- initial_mem)/((1024)**2)) + ' mb')
-    print('time elapsed: ' + str(datetime.now()-start))
-
+    file_exists = os.path.isfile('experiment.csv')
+    with open('experiment.csv', 'a', newline='') as csvFile :
+        writer = csv.writer(csvFile)
+        if not file_exists :
+            writer.writerow(['Board Number', 'Heuristic', 'Number Of Nodes Expanded', 'Cost', 'Branching Factor', 'Time'])
+        writer.writerow([board_number, "7", ourHeuristicResult[2], 100-ourHeuristic.cumulative_cost, ourHeuristicResult[1], timeElapsedOurHeuristic])
+        writer.writerow([board_number, "5", heuristic5Result[2], 100-heuristic5.cumulative_cost, heuristic5Result[1], timeElapsedHeuristic5])
+        writer.writerow([board_number, "6", heuristic6Result[2], 100-heuristic6.cumulative_cost, heuristic6Result[1], timeElapsedHeuristic6])
 
 if __name__ == "__main__":
-    main()
-
-# if __name__ == "__main__":
-#     main()
+    for board_number in tqdm(range(10)) :
+        file = str("./testBoards/board" + str(board_number) + ".txt")
+        main(board_number + 1, file)

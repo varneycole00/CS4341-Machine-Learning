@@ -181,7 +181,7 @@ class PaFinder:
         return int(forward_cost)
 
     # Heuristic calculator will only calculate the better_than_sum heuristic (per Assignment 3 guidelines)
-    def get_better_than_sum(self, current_x, current_y):
+    def get_classic_heuristic(self, current_x, current_y):
         goal_x = self.goal[0]
         goal_y = self.goal[1]
         hor_dist = abs(goal_x-current_x)
@@ -193,7 +193,17 @@ class PaFinder:
         if (vert_dist > 0):
             better_than_sum += 1
 
-        if self.heuristic == heuristic.bet_x_three:
+        if self.heuristic == heuristic.ZERO:
+            return 0
+        elif self.heuristic == heuristic.MIN:
+            return min(hor_dist, vert_dist)
+        elif self.heuristic == heuristic.MAX:
+            return max(hor_dist, vert_dist)
+        elif self.heuristic == heuristic.SUM:
+            return hor_dist + vert_dist
+        elif self.heuristic == heuristic.better_than_sum:
+            return better_than_sum
+        elif self.heuristic == heuristic.bet_x_three:
             return better_than_sum * 3
         else:
             return better_than_sum
@@ -351,7 +361,7 @@ class PaFinder:
 
                     new_cell = copy.deepcopy(getattr(self.marked_map[newy][newx], new_orientation)) # TODO : does this copy?
 
-                    better_than_sum = self.get_better_than_sum(newx, newy)
+                    better_than_sum = self.get_classic_heuristic(newx, newy)
                     new_cell.estimated_CTG = better_than_sum
                     new_cell.heuristic5 = better_than_sum + cumulative_cost + temp_cost
                     # Set the cost of the cell in the marked map to the final cost.
@@ -463,11 +473,11 @@ class PaFinder:
                 # order. The reason that this is not done within the node itself is to cut down on the size of the
                 # objects that are being manipulated.
                 self.back_tracking(cheapest_node[1], cheapest_node[2], back_tracking_list)
-                print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
-                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
-                      round((self.total-1)/self.counter, 2))
+                # heuristic6('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
+                #       100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
+                #       round((self.total-1)/self.counter, 2))
 
-                return best_node, self.marked_map, self.visited
+                return best_node, round((self.total-1)/self.counter, 2), self.counter, self.marked_map, self.visited
                 # plt.figure()
                 # plt.plot(best_node.x_axis, best_node.heuristic_roc, label="Heuristic Rate of Change")
                 # plt.plot(best_node.x_axis, best_node.cost_roc, label="Cost Rate of Change")

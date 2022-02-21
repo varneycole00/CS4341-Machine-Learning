@@ -37,17 +37,28 @@ class map_generator():
 
         return Map(map,starting_pos,goal_pos)
 
-    def generate_random_map(cols = 10, rows = 10):
+    def generate_random_map(file:open, cols = 650, rows = 650):
         map = []
-        for row in range(rows):
-            temp_row = []
-            for col in range(cols):
-                temp_row.append(str(random.randint(1,9)))
-            map.append(temp_row)
         goal = (random.randint(0,cols-1),random.randint(0,rows-1))
         start = (random.randint(0,cols-1),random.randint(0,rows-1))
         while goal == start:
             start = (random.randint(0,cols-1),random.randint(0,rows-1))
+
+        for row in range(rows):
+            temp_row = []
+            for col in range(cols):
+                num = str(random.randint(1,9))
+                temp_row.append(num)
+                if col == goal[0] and row == goal[1] : file.write('G')
+                elif col == start[0] and row == start[1] : file.write('S')
+                else : file.write(num)
+
+                if col != cols - 1 :
+                    file.write("\t")
+                else :
+                    file.write("\n")
+            map.append(temp_row)
+
         map[goal[1]][goal[0]] = 'G'
         map[start[1]][start[0]] = 'S'
         return Map(map,start,goal)
