@@ -38,6 +38,8 @@ class Direction :
         # heuristic_estimate_roc is the rate of change of the predicted cost to the goal from that node, from
         # the parent to the child (child.current_heuristic_estimate - parent.current_heuristic_estimate)
         self.heuristic_estimate_roc = 0
+        # heuristic_estimate_avg is the running average of the change towards/away from the goal.
+        self.heuristic_estimate_avg = 0
         self.parent_coordinates = (0, 0)
         self.current_coordinate = (0, 0)
         self.parent_orientation = ''
@@ -321,12 +323,15 @@ class PaFinder:
                         if first:
                             new_cell.heuristic_roc = 0
                             new_cell.cost_roc = 0
-                            new_cell.current_heuristic_estimate_roc = 0
+                            new_cell.heuristic_estimate_roc = 0
+                            new_cell.current_heuristic_estimate_avg = heuristic_cost
                         if not first:
                             new_cell.heuristic_roc = new_cell.heuristic - parent.heuristic
                             new_cell.cost_roc = new_cell.cumulative_cost - parent.cumulative_cost
-                            new_cell.current_heuristic_estimate_roc = new_cell.current_heuristic_estimate \
+                            new_cell.heuristic_estimate_roc = new_cell.current_heuristic_estimate \
                                                                       - parent.current_heuristic_estimate
+                            new_cell.heuristic_estimate_avg = (parent.heuristic_estimate_avg
+                                                                       + heuristic_cost) / 2
                         # ~~~~~~~~~~~~~~~~~~~~
                         # Denote that the cell has been visited.
                         new_cell.filled = True
@@ -358,7 +363,7 @@ class PaFinder:
                     node = back_tracking_list.pop()
                     avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
                     avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self)
-                    # TODO add heuristic_roc, cost_roc, current_heuristic_estimate_roc
+                    # TODO add heuristic_roc, cost_roc, heuristic_estimate_roc, heuristic_estimate_avg
                     writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove, avgMoveDir, (avgMove + avgMoveDir)/2])
 
         else:
