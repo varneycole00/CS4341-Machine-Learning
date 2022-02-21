@@ -39,7 +39,7 @@ class Direction :
         # the parent to the child (child.current_heuristic_estimate - parent.current_heuristic_estimate)
         self.heuristic_estimate_roc = 0
         # heuristic_estimate_avg is the running average of the change towards/away from the goal.
-        self.heuristic_estimate_avg = 0
+        self.heuristic_roc_sum = 0
         self.parent_coordinates = (0, 0)
         self.current_coordinate = (0, 0)
         self.parent_orientation = ''
@@ -74,7 +74,7 @@ class MapCell:
 
 class PaFinder:
 
-    def __init__(self, map, heuristic = heuristic.ZERO):
+    def __init__(self, map, heuristic = heuristic.better_than_sum):
         self.map = map
         self.heuristic = heuristic
         self.goal = [0, 0]
@@ -201,8 +201,6 @@ class PaFinder:
             return hor_dist + vert_dist
         elif self.heuristic == heuristic.better_than_sum:
             return better_than_sum
-        elif self.heuristic == heuristic.bet_x_three:
-            return better_than_sum * 3
         elif self.heuristic == heuristic.bet_x_three:
             return better_than_sum * 3
         elif self.heuristic == heuristic.test:
@@ -335,8 +333,7 @@ class PaFinder:
                             new_cell.cost_roc = new_cell.cumulative_cost - parent.cumulative_cost
                             new_cell.heuristic_estimate_roc = new_cell.current_heuristic_estimate \
                                                                       - parent.current_heuristic_estimate
-                            new_cell.heuristic_estimate_avg = (parent.heuristic_estimate_avg
-                                                                       + heuristic_cost) / 2
+                            new_cell.heuristic_roc_sum = (parent.heuristic_roc_sum + new_cell.cost_roc)
                         # ~~~~~~~~~~~~~~~~~~~~
                         # Denote that the cell has been visited.
                         new_cell.filled = True
@@ -363,11 +360,13 @@ class PaFinder:
             with open('data.csv', 'a', newline='') as csvFile :
                 writer = csv.writer(csvFile)
                 if not file_exists :
-                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Intelligent_Estimate'])  # TODO : add features here
+                    writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Avg_Terrain_Cost_WODir', 'Avg_Terrain_Cost_WDir', 'Avg_Terrain_WAWODir', 'Heuristic_Estimate_ROC','Cost_ROC', 'Heuristic_ROC', 'Heuristic_Estimate_Avg', 'Heuristic_wGoal_Knowledge'])
                 while len(back_tracking_list) > 0:
                     node = back_tracking_list.pop()
+                    avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
+                    avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, True, node.current_coordinate[0], node.current_coordinate[1], self)
                     intel_est = FeatureCalculator.estimate_cost_with_knowledge(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self.heuristic_calculator(node.current_coordinate[0], node.current_coordinate[1], type(node).__name__), self)
-                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, intel_est])
+                    writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove, avgMoveDir, (avgMove + avgMoveDir) / 2, node.heuristic_estimate_roc, node.cost_roc, node.heuristic_roc, node.heuristic_roc_sum / node.depth, intel_est])
 
         else:
             # child_node is the node that we are currently looking at.

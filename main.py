@@ -17,7 +17,7 @@ def main():
         map = map_generator.file_to_map(file)
 
     else:
-        map = map_generator.generate_random_map(rows=500, cols=500)
+        map = map_generator.generate_random_map(rows=650, cols=650)
         map_generator.map_to_file(map)
 
     # print('path to solution:')
