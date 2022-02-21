@@ -106,7 +106,7 @@ class FeatureCalculator :
         elif linear_distance < 8 :
             return avg_move_from_cur + heuristic5
         else:
-            return avg_move_from_cur + (heuristic5 - 2) + avg_goal_cost
+            return avg_move_from_cur + (heuristic5 - 2) + (result[0] / result[1])
 
 
 

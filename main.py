@@ -31,8 +31,6 @@ def main():
     # print('time elapsed: ' + str(datetime.now()-start))
 
 
-for i in tqdm(range(720)) :
-    main()
-
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    for i in tqdm(range(720)) :
+        main()
