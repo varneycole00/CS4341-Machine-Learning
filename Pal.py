@@ -9,6 +9,7 @@ from toolbox import Toolbox
 from collections import deque
 # import matplotlib.pyplot as plt
 from enum import Enum
+import copy
 import sys
 
 class heuristic(Enum):
@@ -26,7 +27,7 @@ class Direction :
         self.filled = False
         self.cumulative_cost = 0
         # heuristic is the final heuristic value, the one that is used in the frontier
-        self.heuristic = 0
+        self.heuristic5 = 0
         # heuristic_roc is the rate of change of the heuristic from the parent to the child
         # (child.heuristic - parent.heuristic)
         self.heuristic_roc = 0
@@ -39,13 +40,14 @@ class Direction :
         # the parent to the child (child.current_heuristic_estimate - parent.current_heuristic_estimate)
         self.heuristic_estimate_roc = 0
         # heuristic_estimate_avg is the running average of the change towards/away from the goal.
-        self.heuristic_roc_sum = 0
+        self.estimated_CTG_roc_SUM = 0
         self.parent_coordinates = (0, 0)
         self.current_coordinate = (0, 0)
         self.parent_orientation = ''
         self.cumulative_action = 0
         self.depth = 0
         self.orientation = ''
+        self.new_heuristic_final_cost = 0
 
 
 class East(Direction):
@@ -179,7 +181,24 @@ class PaFinder:
         return int(forward_cost)
 
     # Heuristic calculator will only calculate the better_than_sum heuristic (per Assignment 3 guidelines)
-    def heuristic_calculator(self, current_x, current_y, orientation):
+    def get_better_than_sum(self, current_x, current_y):
+        goal_x = self.goal[0]
+        goal_y = self.goal[1]
+        hor_dist = abs(goal_x-current_x)
+        vert_dist = abs(goal_y - current_y)
+
+        better_than_sum = hor_dist + vert_dist
+        if (hor_dist > 0):
+            better_than_sum += 1
+        if (vert_dist > 0):
+            better_than_sum += 1
+
+        if self.heuristic == heuristic.bet_x_three:
+            return better_than_sum * 3
+        else:
+            return better_than_sum
+
+    def heuristic_calculator(self, current_x, current_y, orientation, estm_avg):
         goal_x = self.goal[0]
         goal_y = self.goal[1]
         hor_dist = abs(goal_x-current_x)
@@ -203,11 +222,45 @@ class PaFinder:
             return better_than_sum
         elif self.heuristic == heuristic.bet_x_three:
             return better_than_sum * 3
-        elif self.heuristic == heuristic.test:
-            return 2.5425 * better_than_sum + 2.1414 * FeatureCalculator.get_avg_move_toward_goal(current_x, current_y, self.goal[0], self.goal[1], self.map) + 0.9064
-        elif self.heuristic == heuristic.test2:
-            return 2.5642 * better_than_sum + 1.1546 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, True, current_x, current_y, self) + 4.3586
-        # return better_than_sum
+        elif self.heuristic == heuristic.test: # the one with the cost
+            return 1.9095 * better_than_sum + 0.4311 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, True, current_x, current_y, self) \
+                   + 0.6241 * FeatureCalculator.estimate_cost_with_knowledge(orientation, current_x, current_y, better_than_sum, self) + 0.6068
+        elif self.heuristic == heuristic.test2: # the o
+            return 1.1233 * better_than_sum + -1.0043 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, True, current_x, current_y, self) \
+                   + 1.4142 * FeatureCalculator.estimate_cost_with_knowledge(orientation, current_x, current_y, better_than_sum, self) - 6.6042
+
+#     1.1233 * Heuristic_Estimate +
+#     -1.0043 * Avg_Terrain_Cost_WDir +
+#     1.4142 * Heuristic_wGoal_Knowledge +
+# -6.6042
+
+
+#     7.6177 * Heuristic_Estimate +
+#     7.9073 * Avg_Terrain_Cost_WDir +
+# -5.0909 * Heuristic_wGoal_Knowledge +
+# -2.3992
+
+# 6.6099 * Heuristic_Estimate +
+# 6.5063 * Avg_Terrain_Cost_WDir +
+# -4.0533 * Heuristic_wGoal_Knowledge +
+# -3.9988
+
+# m------ Tried
+    # score -724 vs test 1 -721
+    #
+    # 6.5859 * Heuristic_Estimate +
+    # 6.4706 * Avg_Terrain_Cost_WDir +
+    # 9.7543 * Heuristic_Estimate_Avg +
+    # -4.0302 * Heuristic_wGoal_Knowledge +
+    # 10.568
+
+    # with Heuristic ROC
+    #     -3.0246 * Avg_Terrain_Cost_WDir +
+    # 1.5376 * Heuristic_ROC +
+    # 2.5591 * Heuristic_wGoal_Knowledge +
+    # 7.7834
+
+# return better_than_sum
     # Dictionary of the all possible turns and movements.
     def dictionary_holder(self, action_needed, creation, coordinates):
         # There is a different list for "creation" because at the start (i.e. when on the start node) it is possible to
@@ -295,26 +348,40 @@ class PaFinder:
                     # Gets the cost of the proposed turn and move.
                     temp_cost = self.dictionary_holder("TURNING", first, coordinates)[turn] \
                         + self.dictionary_holder("MOVE", first, [newx, newy])[move]
-                    heuristic_cost = self.heuristic_calculator(newx, newy, new_orientation)
+
+                    new_cell = copy.deepcopy(getattr(self.marked_map[newy][newx], new_orientation)) # TODO : does this copy?
+
+                    better_than_sum = self.get_better_than_sum(newx, newy)
+                    new_cell.estimated_CTG = better_than_sum
+                    new_cell.heuristic5 = better_than_sum + cumulative_cost + temp_cost
+                    # Set the cost of the cell in the marked map to the final cost.
+                    new_cell.cumulative_cost = cumulative_cost + temp_cost
+                    # ~~~~~~~~~~~~~~~~~~~~
+                    # For the purpose of training function
+                    if first:
+                        new_cell.heuristic_roc = 0
+                        new_cell.cost_roc = 0
+                        new_cell.estimated_CTG_roc = 0
+                        new_cell.estimated_CTG_roc_SUM = 0
+                    if not first:
+                        new_cell.heuristic_roc = new_cell.heuristic5 - parent.heuristic5
+                        new_cell.cost_roc = new_cell.cumulative_cost - parent.cumulative_cost
+                        new_cell.estimated_CTG_roc = new_cell.estimated_CTG - parent.estimated_CTG
+                        new_cell.estimated_CTG_roc_SUM = (parent.estimated_CTG_roc_SUM + new_cell.estimated_CTG_roc)
+                    # ~~~~~~~~~~~~~~~~~~~~
+
+                    new_heuristic_cost = self.heuristic_calculator(newx, newy, new_orientation, new_cell.estimated_CTG_roc_SUM / (depth + 1) )
                     # Adds the cost of the proposed move to the cost of the heuristic calculated at the cell x, y.
-                    heuristic_temp_cost = temp_cost + heuristic_cost
+                    new_heuristic_temp_cost = temp_cost + new_heuristic_cost
                     # Adds the heuristic cost to the cumulative cost that it took to get here.
-                    heuristic_final_cost = heuristic_temp_cost + cumulative_cost
-                    # The final actual cost is the temp cost + the cost that it took to get here. The final heuristic
-                    # cost is only used to determine the next item from the frontier to expand, the final actual cost
-                    # is used for everything else, including calculating the heuristic of all children.
-                    final_cost = temp_cost + cumulative_cost
-                    # new_cell is the cell with the coordinates and orientation that we have previously found. Now we
-                    # will check to see if there is a better heuristic already in this new cell.
-                    new_cell = getattr(self.marked_map[newy][newx], new_orientation)
+                    new_heuristic_final_cost = new_heuristic_temp_cost + cumulative_cost
+                    old_cell = getattr(self.marked_map[newy][newx], new_orientation)
                     # If the new cell is empty, go right ahead, and if the heuristic of the new cell is greater than
                     # the new heuristic that we just calculated, then we cna move ahead.
                     if not new_cell.filled or new_cell.heuristic > heuristic_final_cost:
                         # Add the coordinates and orientation that we just found to the frontier. The frontier is a min
                         # heap sorted by the heuristic.
-                        heapq.heappush(self.frontier, (heuristic_final_cost, [newx, newy], new_orientation))
-                        # Set the cost of the cell in the marked map to the final cost.
-                        new_cell.cumulative_cost = final_cost
+                        heapq.heappush(self.frontier, (new_heuristic_final_cost, [newx, newy], new_orientation))
                         # added so we can find other spaces around it
                         new_cell.current_coordinate = [newx, newy]
                         # Set the heuristic to the final heuristic.
@@ -349,7 +416,10 @@ class PaFinder:
                         else:
                             new_cell.cumulative_action = cumulative_action + 2
 
-    # Returns the moves taken in order take.
+                        setattr(self.marked_map[newy][newx], new_orientation, new_cell)
+
+
+# Returns the moves taken in order take.
     def back_tracking(self, child_coordinates, orientation, back_tracking_list):
         # If the start coordinates are equal to teh coordinates currently being investigated, then it is over.
         if child_coordinates == self.start:
@@ -407,9 +477,9 @@ class PaFinder:
                 # order. The reason that this is not done within the node itself is to cut down on the size of the
                 # objects that are being manipulated.
                 self.back_tracking(cheapest_node[1], cheapest_node[2], back_tracking_list)
-                # print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
-                #       100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
-                #       round((self.total-1)/self.counter, 2))
+                print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
+                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
+                      round((self.total-1)/self.counter, 2))
 
                 return best_node, self.marked_map, self.visited
                 # plt.figure()

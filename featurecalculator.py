@@ -21,35 +21,49 @@ class FeatureCalculator :
             above_left, above_right = goal_area[2][1], goal_area[0][1]
             left_side, center, right_side = goal_area[2][2], goal_area[1][2], goal_area[0][2]
 
+        num_points = 0
+        sum = 0
         # path 1 thru center
-        path1 = Pal.map[center[1]][center[0]] + 1
+        if center[0] in range(len(Pal.map[0])) and center[1] in range(len(Pal.map)):
+            sum += Pal.map[center[1]][center[0]] + 1
+            num_points += 1
         # path 2 thru left side,
         #   involves forward, forward, turn
-        path2 = Pal.map[left_side[1]][left_side[0]] + Pal.map[above_left[1]][above_left[0]] \
-                + Pal.get_turn_cost(above_left) + 1 + 3 # 3 represents turn sequence needed to approach l/r side
+        if left_side[0] in range(len(Pal.map[0])) and left_side[1] in range(len(Pal.map)) and above_left[0] in range(len(Pal.map[0])) and above_left[1] in range(len(Pal.map)) :
+            sum += Pal.map[left_side[1]][left_side[0]] + Pal.map[above_left[1]][above_left[0]] \
+                   + Pal.get_turn_cost(above_left) + 1 + 3 # 3 represents turn sequence needed to approach l/r side
+            num_points += 1
         # path 3 thru right side,
         #   involves forward, forward, turn
-        path3 = Pal.map[right_side[1]][right_side[0]] + Pal.map[above_right[1]][above_right[0]] \
-                + Pal.get_turn_cost(above_right) + 1 + 3 # 3 represents turn sequence needed to approach l/r side
+        if right_side[0] in range(len(Pal.map[0])) and right_side[1] in range(len(Pal.map)) and above_right[0] in range(len(Pal.map[0])) and above_right[1] in range(len(Pal.map)) :
+            sum += Pal.map[right_side[1]][right_side[0]] + Pal.map[above_right[1]][above_right[0]] \
+                   + Pal.get_turn_cost(above_right) + 1 + 3 # 3 represents turn sequence needed to approach l/r side
+            num_points += 1
 
-        return path1 + path2 + path3
+
+
+        return [sum, num_points]
 
 
 
     @staticmethod
     def total_terrain_cost_to_goal_diag(dir_goal_to_robot, Pal):
+        result1 = []
+        result2 = []
         if dir_goal_to_robot == 'SE' :
-            return FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('S', Pal) +\
-                FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('E', Pal)
+            result1 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('S', Pal)
+            result2 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('E', Pal)
         elif dir_goal_to_robot == 'NE' :
-            return FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('N', Pal) + \
-                   FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('E', Pal)
+            result1 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('N', Pal)
+            result2 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('E', Pal)
         elif dir_goal_to_robot == 'NW' :
-            return FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('N', Pal) + \
-                   FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('W', Pal)
+            result1 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('N', Pal)
+            result2 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('W', Pal)
         elif dir_goal_to_robot == 'SW' :
-            return FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('S', Pal) + \
-                   FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('W', Pal)
+            result1 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('S', Pal)
+            result2 = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('W', Pal)
+
+        return [(result1[0] + result2[0]), (result1[1] + result2[1])]
 
 
 
@@ -67,21 +81,21 @@ class FeatureCalculator :
         avg_goal_cost = 0
 
         if   x == gx and y < gy: # South
-            avg_goal_cost = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('N', Pal) / 3
+            result = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('N', Pal)
         elif x < gx and y < gy: # South East
-            avg_goal_cost = FeatureCalculator.total_terrain_cost_to_goal_diag('NW', Pal) / 6
+            result = FeatureCalculator.total_terrain_cost_to_goal_diag('NW', Pal)
         elif x < gx and y == gy: # East
-            avg_goal_cost = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('W', Pal) / 3
+            result = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('W', Pal)
         elif x < gx and y > gy: # North East
-            avg_goal_cost = FeatureCalculator.total_terrain_cost_to_goal_diag('SW', Pal) / 6
+            result = FeatureCalculator.total_terrain_cost_to_goal_diag('SW', Pal)
         elif x == gx and y > gy: # North
-            avg_goal_cost = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('S', Pal) / 3
+            result = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('S', Pal)
         elif x > gx and y > gy: # North WEst
-            avg_goal_cost = FeatureCalculator.total_terrain_cost_to_goal_diag('SE', Pal) / 6
+            result = FeatureCalculator.total_terrain_cost_to_goal_diag('SE', Pal)
         elif x > gx and y == gy: # west
-            avg_goal_cost = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('E', Pal) / 3
+            result = FeatureCalculator.total_terrain_cost_to_goal_horzOrVert('E', Pal)
         elif x > gx and y < gy: # South West
-            avg_goal_cost = FeatureCalculator.total_terrain_cost_to_goal_diag('NE', Pal) / 6
+            result = FeatureCalculator.total_terrain_cost_to_goal_diag('NE', Pal)
 
 
         # if distance is less than 2 return avg_goal_cost
@@ -92,7 +106,7 @@ class FeatureCalculator :
         elif linear_distance < 8 :
             return avg_move_from_cur + heuristic5
         else:
-            return avg_move_from_cur + (heuristic5 - 2) + avg_goal_cost
+            return avg_move_from_cur + (heuristic5 - 2) + (result[0] / result[1])
 
 
 
@@ -171,41 +185,41 @@ class FeatureCalculator :
 
         if   x == gx and y < gy:
             result = FeatureCalculator.find_costs_horzOrVert(direction, x, y, includesTurns,
-                                                   ('South', SouthCoord),
-                                                   ('East', EastCoord), ('West', WestCoord),
-                                                   ('North'), Pal)
+                                                             ('South', SouthCoord),
+                                                             ('East', EastCoord), ('West', WestCoord),
+                                                             ('North'), Pal)
 
         elif x < gx and y < gy:
             result = FeatureCalculator.find_costs_diag(direction, x, y, includesTurns,
-                                             ('South', SouthCoord), ('East', EastCoord),
-                                             ('West'), ('North'), Pal)
+                                                       ('South', SouthCoord), ('East', EastCoord),
+                                                       ('West'), ('North'), Pal)
         elif x < gx and y == gy:
             result = FeatureCalculator.find_costs_horzOrVert(direction, x, y, includesTurns,
-                                                   ('East', EastCoord),
-                                                   ('South', SouthCoord), ('North', NorthCoord),
-                                                   ('West'), Pal)
+                                                             ('East', EastCoord),
+                                                             ('South', SouthCoord), ('North', NorthCoord),
+                                                             ('West'), Pal)
         elif x < gx and y > gy:
             result = FeatureCalculator.find_costs_diag(direction, x, y, includesTurns,
-                                             ('East', EastCoord), ('North', NorthCoord),
-                                             ('West'), ('South'), Pal)
+                                                       ('East', EastCoord), ('North', NorthCoord),
+                                                       ('West'), ('South'), Pal)
         elif x == gx and y > gy:
             result = FeatureCalculator.find_costs_horzOrVert(direction, x, y, includesTurns,
-                                                   ('North', NorthCoord),
-                                                   ('East', EastCoord), ('West', WestCoord),
-                                                   ('South'), Pal)
+                                                             ('North', NorthCoord),
+                                                             ('East', EastCoord), ('West', WestCoord),
+                                                             ('South'), Pal)
         elif x > gx and y > gy:
             result = FeatureCalculator.find_costs_diag(direction, x, y, includesTurns,
-                                             ('West', WestCoord), ('North', NorthCoord),
-                                             ('South'), ('East'), Pal)
+                                                       ('West', WestCoord), ('North', NorthCoord),
+                                                       ('South'), ('East'), Pal)
         elif x > gx and y == gy:
             result = FeatureCalculator.find_costs_horzOrVert(direction, x, y, includesTurns,
-                                                   ('West', WestCoord),
-                                                   ('South', SouthCoord), ('North', NorthCoord),
-                                                   ('East'), Pal)
+                                                             ('West', WestCoord),
+                                                             ('South', SouthCoord), ('North', NorthCoord),
+                                                             ('East'), Pal)
         elif x > gx and y < gy:
             result = FeatureCalculator.find_costs_diag(direction, x, y, includesTurns,
-                                             ('South', SouthCoord), ('West', WestCoord),
-                                             ('North'), ('East'), Pal)
+                                                       ('South', SouthCoord), ('West', WestCoord),
+                                                       ('North'), ('East'), Pal)
 
         list_of_points = result[0]
         total_terrain_cost = result[1]
