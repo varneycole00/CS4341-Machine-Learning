@@ -19,4 +19,4 @@ This is an additional run setting that is helpful for getting a sense of a heuri
 &nbsp;&nbsp;&nbsp;python main.py
 <br />
 <br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is a catch-all run setting, that prevents an error from running with no program arguments. It runs a 20 x 20 board with Heuristic 0
+This is a catch-all run setting, that prevents an error from running with no program arguments. It runs a 20 x 20 board with Heuristic 0
