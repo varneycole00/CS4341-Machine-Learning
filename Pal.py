@@ -19,8 +19,7 @@ class heuristic(Enum):
     SUM = 'sum'
     better_than_sum = 'bet'
     bet_x_three = 'bx3'
-    test = 'test'
-    test2 = 'test2'
+    learned_heuristic = 'test'
 
 class Direction :
     def __init__(self):
@@ -145,13 +144,6 @@ class PaFinder:
             new_map.append(temp_row)
         # Setting origin location.
         origin = new_map[self.start[1]][self.start[0]]
-        # Setting the parent coordinates of the four orientations of the origin, this is done so that the back-tracking
-        # function knows when it has made it back to the start. (Commented out because I do not believe it is used
-        # anymore, but if something breaks, add it back in.
-        # origin.north.parent_coordinates = ['x', 'y']
-        # origin.south.parent_coordinates = ['x', 'y']
-        # origin.east.parent_coordinates = ['x', 'y']
-        # origin.west.parent_coordinates = ['x', 'y']
 
         return new_map
 
@@ -232,43 +224,10 @@ class PaFinder:
             return better_than_sum
         elif self.heuristic == heuristic.bet_x_three:
             return better_than_sum * 3
-        elif self.heuristic == heuristic.test: # the one with the cost
-            return 1.9095 * better_than_sum + 0.4311 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, True, current_x, current_y, self) \
-                   + 0.6241 * FeatureCalculator.estimate_cost_with_knowledge(orientation, current_x, current_y, better_than_sum, self) + 0.6068
-        elif self.heuristic == heuristic.test2: # the o
+        elif self.heuristic == heuristic.learned_heuristic: # the one with the cost
             return 1.1233 * better_than_sum + -1.0043 * FeatureCalculator.get_avg_move_toward_goal_wDir(orientation, True, current_x, current_y, self) \
                    + 1.4142 * FeatureCalculator.estimate_cost_with_knowledge(orientation, current_x, current_y, better_than_sum, self) - 6.6042
 
-#     1.1233 * Heuristic_Estimate +
-#     -1.0043 * Avg_Terrain_Cost_WDir +
-#     1.4142 * Heuristic_wGoal_Knowledge +
-# -6.6042
-
-
-#     7.6177 * Heuristic_Estimate +
-#     7.9073 * Avg_Terrain_Cost_WDir +
-# -5.0909 * Heuristic_wGoal_Knowledge +
-# -2.3992
-
-# 6.6099 * Heuristic_Estimate +
-# 6.5063 * Avg_Terrain_Cost_WDir +
-# -4.0533 * Heuristic_wGoal_Knowledge +
-# -3.9988
-
-# m------ Tried
-    # score -724 vs test 1 -721
-    #
-    # 6.5859 * Heuristic_Estimate +
-    # 6.4706 * Avg_Terrain_Cost_WDir +
-    # 9.7543 * Heuristic_Estimate_Avg +
-    # -4.0302 * Heuristic_wGoal_Knowledge +
-    # 10.568
-
-    # with Heuristic ROC
-    #     -3.0246 * Avg_Terrain_Cost_WDir +
-    # 1.5376 * Heuristic_ROC +
-    # 2.5591 * Heuristic_wGoal_Knowledge +
-    # 7.7834
 
 # return better_than_sum
     # Dictionary of the all possible turns and movements.
@@ -317,6 +276,51 @@ class PaFinder:
                 "Forward": 0,
                 "Bash": 0,
             }
+
+    def get_move(self, child_coordinates, parent_x, parent_y):
+        if (abs(child_coordinates[0] - parent_x) > 1) or \
+                (abs(child_coordinates[1] - parent_y) > 1):
+            return 'Bash'
+        else:
+            return 'Forward'
+
+    def turn_decoder(self, parent, child):
+        if child.count("west"):
+            if parent.count("south"):
+                return "Right"
+            if parent.count("north"):
+                return "Left"
+            if parent.count("west"):
+                return "None"
+            if parent.count("east"):
+                return "Reverse"
+        if child.count("east"):
+            if parent.count("south"):
+                return "Left"
+            if parent.count("north"):
+                return "Right"
+            if parent.count("west"):
+                return "Reverse"
+            if parent.count("east"):
+                return "None"
+        if child.count("south"):
+            if parent.count("south"):
+                return "None"
+            if parent.count("north"):
+                return "Reverse"
+            if parent.count("west"):
+                return "Left"
+            if parent.count("east"):
+                return "Right"
+        if child.count("north"):
+            if parent.count("south"):
+                return "Reverse"
+            if parent.count("north"):
+                return "None"
+            if parent.count("west"):
+                return "Right"
+            if parent.count("east"):
+                return "Left"
 
     def expand_frontier(self, coordinates, orientation):
         # cumulative_cost is the cost of the path to this node, the cumulative cost is taken from the marked_map cell
@@ -420,19 +424,8 @@ class PaFinder:
         # If the start coordinates are equal to teh coordinates currently being investigated, then it is over.
         if child_coordinates == self.start:
             # While there is still something left in the back_tracking_list, pop it off and print it.
-            goal = back_tracking_list.__getitem__(0)
-            totalCost = goal.cumulative_cost
-            # file_exists = os.path.isfile('data.csv')
-            # with open('data.csv', 'a', newline='') as csvFile :
-            #     writer = csv.writer(csvFile)
-            #     if not file_exists :
-            #         writer.writerow(['Cost_To_Goal', 'Heuristic_Estimate', 'Avg_Terrain_Cost_WODir', 'Avg_Terrain_Cost_WDir', 'Avg_Terrain_WAWODir', 'Heuristic_Estimate_ROC','Cost_ROC', 'Heuristic_ROC', 'Heuristic_Estimate_Avg', 'Heuristic_wGoal_Knowledge'])
-            #     while len(back_tracking_list) > 0:
-            #         node = back_tracking_list.pop()
-            #         avgMove = FeatureCalculator.get_avg_move_toward_goal(node.current_coordinate[0], node.current_coordinate[1], self.goal[0], self.goal[1], self.map)
-            #         avgMoveDir = FeatureCalculator.get_avg_move_toward_goal_wDir(type(node).__name__, True, node.current_coordinate[0], node.current_coordinate[1], self)
-            #         intel_est = FeatureCalculator.estimate_cost_with_knowledge(type(node).__name__, node.current_coordinate[0], node.current_coordinate[1], self.get_better_than_sum(node.current_coordinate[0], node.current_coordinate[1]), self)
-            #         writer.writerow([totalCost - node.cumulative_cost, node.current_heuristic_estimate, avgMove, avgMoveDir, (avgMove + avgMoveDir) / 2, node.estimated_CTG_roc, node.cost_roc, node.heuristic_roc, node.estimated_CTG_roc_SUM / node.depth, intel_est])
+            while len(back_tracking_list) > 0:
+                print(back_tracking_list.pop())
 
         else:
             # child_node is the node that we are currently looking at.
@@ -440,14 +433,22 @@ class PaFinder:
             # Get the parent coordinates from the marked map.
             parent_y = child_node.parent_coordinates[1]
             parent_x = child_node.parent_coordinates[0]
+
             # Toolbox.get_move and Toolbox.turn_decoder get the move that would have to have been made given the child
             # coordinates and orientation and the parent coordinates. get_move determines the distance that would need
             # to be traveled to get from the parent coordinates to the child coordinates, determining forward or bash,
             # and turn_decoder determines which turn the parent would have needed to make to get their orientation to
             # match the orientation of the child.
+            parent_node = getattr(self.marked_map[parent_y][parent_x], child_node.parent_orientation)
+            move = self.get_move(child_coordinates, parent_x, parent_y)
+            turn = self.turn_decoder(child_node.parent_orientation,orientation)
             # As in the expand_frontier function, no turn is not counted.
+            if turn == "None":
+                back_tracking_list.append(move)
+            else:
+                back_tracking_list.append(turn)
+                back_tracking_list.append(move)
 
-            back_tracking_list.append(child_node)
             # recursive call to the back_tracking function. The parent coordinates and orientation are now used.
             self.back_tracking([parent_x, parent_y], child_node.parent_orientation, back_tracking_list)
 
@@ -455,14 +456,11 @@ class PaFinder:
     def iterator(self):
         # While loop is used here to make this a tail recursion so that it does not overflow the stack.
         while True:
-
-            # print(self.frontier)
             # The cheapest node is the popped from the frontier.
             cheapest_node = heapq.heappop(self.frontier)
             # Getting the x and y coordinates of the cheapest node.
             cheapest_x = cheapest_node[1][0]
             cheapest_y = cheapest_node[1][1]
-            # print("Expand:", cheapest_node[1], cheapest_node[2], "Heur:", cheapest_node[0])
             # If the cheapest node is the goal, then it is all over.
             if cheapest_node[1] == self.goal:
                 back_tracking_list = deque()
@@ -473,21 +471,13 @@ class PaFinder:
                 # order. The reason that this is not done within the node itself is to cut down on the size of the
                 # objects that are being manipulated.
                 self.back_tracking(cheapest_node[1], cheapest_node[2], back_tracking_list)
-                # heuristic6('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
-                #       100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
-                #       round((self.total-1)/self.counter, 2))
+                print('Path depth =', best_node.depth, ', Actions taken =', best_node.cumulative_action, ', Score =',
+                      100-best_node.cumulative_cost, ', Nodes explored =', self.counter, ', Branching = ',
+                      round((self.total-1)/self.counter, 2))
 
                 return best_node, round((self.total-1)/self.counter, 2), self.counter, self.marked_map, self.visited
-                # plt.figure()
-                # plt.plot(best_node.x_axis, best_node.heuristic_roc, label="Heuristic Rate of Change")
-                # plt.plot(best_node.x_axis, best_node.cost_roc, label="Cost Rate of Change")
-                # plt.plot(best_node.x_axis, best_node.difference_roc, label="Difference Rate of Change")
-                # plt.legend()
-                # plt.title("Rate of Change of Best Path")
-                # plt.show()
                 break
             else:
                 # Expand the frontier on the coordinates (cheapest_node[1]) and orientation (cheapest_node[2]) of the
                 # cheapest node.
-
                 self.expand_frontier(cheapest_node[1], cheapest_node[2])
